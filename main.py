@@ -178,9 +178,9 @@ def main():
     parser.add_argument('--xtts_version',"-xv", default='2.0.2', help='Version of XTTS')
     parser.add_argument('--mode',"-m", type=int, choices=[1, 2, 3], default=1,
                         help='Mode of operation for audio processing')
-    parser.add_argument('--source_lang',"-sol", default='auto', help='Source language code')
-    parser.add_argument('--target_lang',"-tl", default='en', help='Target language code')
-    parser.add_argument('--speaker_lang',"-spl", default='ru', help='Speaker language code for synthesis')
+    parser.add_argument('--source_lang',"-sol", default=None, help='Source language code')
+    parser.add_argument('--target_lang',"-tl", default='en', required=True, help='Target language code')
+    parser.add_argument('--speaker_lang',"-spl", default="en", help='Speaker language code for synthesis')
     parser.add_argument('--output_folder',"-ofo", default="output", help='Output folder path')
     parser.add_argument('--output_filename',"-ofi", default="result.mp3", help='Name for the output audio file')
     parser.add_argument('--speaker_wav_path',"-spw",
@@ -192,7 +192,9 @@ def main():
 
     #  LOAD WHISPER MODEL
     model_size = args.whsper_model
+    print(f"Loading Whisper model {model_size}...")
     model = WhisperModel(model_size, device="cuda", compute_type="float16")
+    print("Whisper model loaded")
     filename = args.input # Make sure this is a string
     
     # Load XTTS model
@@ -210,10 +212,12 @@ def main():
             
     xtts = Xtts.init_from_config(config)
     xtts.load_checkpoint(config, checkpoint_dir=str(checkpoint_dir))
+    print("Loading XTTS model")
     xtts.to("cuda")
+    print("XTTS model loaded")
     
     # Transcribe the audio file using WhisperModel
-    segments, info = model.transcribe(filename, beam_size=5)
+    segments, info = model.transcribe(filename,language=args.source_lang, beam_size=5)
     
     print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
 
